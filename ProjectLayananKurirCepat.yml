@@ -1,0 +1,216 @@
+openapi: "3.0.2"
+info:
+  title: API Layanan Kurir Cepat
+  description: API untuk mengelola pengiriman paket, pelacakan, dan status pengantaran dalam sistem layanan kurir cepat.
+  version: "1.0.0"
+  termsOfService: http://kurircepat.com/terms/
+  contact:
+    name: Admin Kurir Cepat
+    email: support@kurircepat.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.kurircepat.com/v1
+    description: Production Server
+  - url: https://sandbox.kurircepat.com/v1
+    description: Sandbox (testing) Server
+
+tags:
+  - name: Pengiriman
+    description: Endpoint untuk membuat dan melacak pengiriman paket
+  - name: Kurir
+    description: Endpoint terkait informasi dan status kurir
+
+paths:
+  /pengiriman:
+    get:
+      tags:
+        - Pengiriman
+      summary: Mendapatkan daftar pengiriman
+      description: Mengambil semua data pengiriman aktif dan selesai
+      operationId: getPengiriman
+      responses:
+        '200':
+          description: Daftar pengiriman berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pengiriman'
+        '500':
+          description: Kesalahan server
+    post:
+      tags:
+        - Pengiriman
+      summary: Membuat pengiriman baru
+      description: Membuat pengiriman baru berdasarkan data pengirim dan penerima
+      operationId: createPengiriman
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PengirimanInput'
+      responses:
+        '201':
+          description: Pengiriman berhasil dibuat
+        '400':
+          description: Data tidak valid
+
+  /pengiriman/{id}:
+    get:
+      tags:
+        - Pengiriman
+      summary: Mendapatkan detail pengiriman
+      description: Mengambil informasi lengkap pengiriman berdasarkan ID
+      operationId: getPengirimanById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID pengiriman
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detail pengiriman berhasil diambil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pengiriman'
+        '404':
+          description: Pengiriman tidak ditemukan
+    put:
+      tags:
+        - Pengiriman
+      summary: Memperbarui status pengiriman
+      description: Mengubah status pengiriman seperti "Sedang Dikirim" atau "Selesai"
+      operationId: updateStatusPengiriman
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID pengiriman yang akan diperbarui
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusPengirimanInput'
+      responses:
+        '200':
+          description: Status pengiriman berhasil diperbarui
+        '400':
+          description: Data tidak valid
+        '404':
+          description: Pengiriman tidak ditemukan
+    delete:
+      tags:
+        - Pengiriman
+      summary: Menghapus data pengiriman
+      description: Menghapus pengiriman dari sistem (biasanya hanya untuk testing atau pembatalan)
+      operationId: deletePengiriman
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID pengiriman yang akan dihapus
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Pengiriman berhasil dihapus
+        '404':
+          description: Pengiriman tidak ditemukan
+
+  /kurir:
+    get:
+      tags:
+        - Kurir
+      summary: Mendapatkan daftar kurir aktif
+      description: Menampilkan data kurir yang sedang bertugas
+      operationId: getKurir
+      responses:
+        '200':
+          description: Daftar kurir berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Kurir'
+        '500':
+          description: Kesalahan server
+
+components:
+  schemas:
+    Pengiriman:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID unik pengiriman
+        namaPengirim:
+          type: string
+        alamatAsal:
+          type: string
+        namaPenerima:
+          type: string
+        alamatTujuan:
+          type: string
+        beratPaket:
+          type: number
+          format: float
+          description: Berat paket dalam kilogram
+        status:
+          type: string
+          description: "Status pengiriman (Contoh: Diproses, Dikirim, Selesai)"
+        kurir:
+          $ref: '#/components/schemas/Kurir'
+
+    PengirimanInput:
+      type: object
+      required:
+        - namaPengirim
+        - alamatAsal
+        - namaPenerima
+        - alamatTujuan
+      properties:
+        namaPengirim:
+          type: string
+        alamatAsal:
+          type: string
+        namaPenerima:
+          type: string
+        alamatTujuan:
+          type: string
+        beratPaket:
+          type: number
+          format: float
+
+    StatusPengirimanInput:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Status baru pengiriman
+
+    Kurir:
+      type: object
+      properties:
+        id:
+          type: string
+        nama:
+          type: string
+        nomorTelepon:
+          type: string
+        kendaraan:
+          type: string
+          description: Jenis kendaraan kurir (motor, mobil)
